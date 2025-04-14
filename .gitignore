@@ -3,10 +3,10 @@ MANIFEST
 dist
 build
 *.egg-info
+.*_cache
 
 # Tox
 .tox/
 .coverage
 .coverage.*
-coverage.xml
 htmlcov/

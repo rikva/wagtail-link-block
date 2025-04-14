@@ -1,35 +1,23 @@
 """
 The LinkBlock is not designed to be used on it's own - but as part of other blocks.
 """
+
+from copy import deepcopy
+
 from django.forms.utils import ErrorList
 from django.utils.translation import gettext_lazy as _
-
-from wagtail import __version__ as wagtail_version
 from wagtail.admin.forms.choosers import URLOrAbsolutePathValidator
+from wagtail.blocks import (
+    BooleanBlock,
+    CharBlock,
+    ChoiceBlock,
+    EmailBlock,
+    PageChooserBlock,
+    StreamBlockValidationError,
+    StructBlock,
+    StructValue,
+)
 from wagtail.documents.blocks import DocumentChooserBlock
-
-if int(wagtail_version[0]) >= 3:
-    from wagtail.blocks import (
-        BooleanBlock,
-        CharBlock,
-        ChoiceBlock,
-        EmailBlock,
-        PageChooserBlock,
-        StreamBlockValidationError,
-        StructBlock,
-        StructValue,
-    )
-else:
-    from wagtail.core.blocks import (
-        BooleanBlock,
-        CharBlock,
-        ChoiceBlock,
-        EmailBlock,
-        PageChooserBlock,
-        StreamBlockValidationError,
-        StructBlock,
-        StructValue,
-    )
 
 ##############################################################################
 # Component Parts - should not be used on their own - but as parts of other
@@ -53,9 +41,9 @@ class URLValue(StructValue):
         elif link_to == "anchor":
             return "#" + self.get(link_to)
         elif link_to == "email":
-            return "mailto:{}".format(self.get(link_to))
+            return f"mailto:{self.get(link_to)}"
         elif link_to == "phone":
-            return "tel:{}".format(self.get(link_to))
+            return f"tel:{self.get(link_to)}"
         return None
 
     def get_link_to(self):
@@ -113,6 +101,14 @@ class LinkBlock(StructBlock):
         form_classname = "link_block"
         form_template = "wagtailadmin/block_forms/link_block.html"
         template = "blocks/link_block.html"
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # Make a deep copy of the link-to, as we need to pass the
+        # 'required' option down to it, and don't want to pollute
+        # the other LinkBlocks that are defined on other parent blocks.
+        self.child_blocks["link_to"] = deepcopy(self.child_blocks["link_to"])
+        self.child_blocks["link_to"].field.required = kwargs.get("required", False)
 
     def set_name(self, name):
         """

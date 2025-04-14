@@ -1,49 +1,132 @@
+SHELL=/bin/bash
 .DEFAULT_GOAL := help
-PROJECT_DIR=wagtail_link_block
 
-help: ## Display this help dialog
+
+# ---------------------------------
+# Project specific targets
+# ---------------------------------
+#
+# Add any targets specific to the current project in here.
+
+
+
+# -------------------------------
+# Common targets for DEV projects
+# -------------------------------
+#
+# Edit these targets so they work as expected on the current project.
+#
+# Remember there may be other tools which use these targets, so if a target is not suitable for
+# the current project, then keep the target and simply make it do nothing.
+
+help: ## This help dialog.
 help: help-display
 
+clean: ## Remove unneeded files generated from the various build tasks.
+clean: build-clean
+
+reset: ## Reset your local environment. Useful after switching branches, etc.
+reset: venv-check venv-wipe install-local
+
+check: ## Check for any obvious errors in the project's setup.
+check: pipdeptree-check
+
 format: ## Run this project's code formatters.
-format: black-format isort-format
+format: ruff-format
 
 lint: ## Lint the project.
-lint: black-lint isort-lint flake8-lint
+lint: ruff-lint
 
-# ISort
-isort-lint:
-	isort --check-only --diff ${PROJECT_DIR} setup.py
+test: ## Run unit and integration tests.
+test: django-test
 
-isort-format:
-	isort ${PROJECT_DIR} setup.py
+test-report: ## Run and report on unit and integration tests.
+test-report: coverage-clean test coverage-report
 
-# Flake8
-flake8-lint:
-	flake8 ${PROJECT_DIR} setup.py
+test-lowest: ## Run tox with lowest (oldest) package dependencies.
+test-lowest: tox-test-lowest
 
-# Black
-black-lint:
-	black --check ${PROJECT_DIR} setup.py
+package: ## Builds source and wheel packages
+package: clean build-package
 
-black-format:
-	black ${PROJECT_DIR} setup.py
 
-build: ## Build the project ready for deployment to pypi
-build: dist
+# ---------------
+# Utility targets
+# ---------------
+#
+# Targets which are used by the common targets. You likely want to customise these per project,
+# to ensure they're pointing at the correct directories, etc.
 
-dist: setup.py
-	python3 setup.py sdist bdist_wheel
+# Build
+build-clean:
+	rm -rf build
+	rm -rf dist
+	rm -rf .eggs
+	find . -maxdepth 1 -name '*.egg-info' -exec rm -rf {} +
 
-deploy-test: ## Build and upload the project to TestPyPI (sandbox)
-deploy-test: dist
-	@echo You will need to manually run:
-	@echo 'twine upload -r testpypi dist/*'
+build-package:
+	python -m build
+	twine check --strict dist/*
+	check-wheel-contents dist/*.whl
 
-deploy: ## Build and upload the project to PyPI
-deploy: dist
-	@echo You will need to manually run:
-	@echo 'twine upload dist/*'
 
+# Virtual Environments
+venv-check:
+ifndef VIRTUAL_ENV
+	$(error Must be in a virtualenv)
+endif
+
+venv-wipe: venv-check
+	if ! pip list --format=freeze | grep -v "^pip=\|^setuptools=\|^wheel=" | xargs pip uninstall -y; then \
+	    echo "Nothing to remove"; \
+	fi
+
+
+# Installs
+install-local: pip-install-local
+
+
+# Pip
+pip-install-local: venv-check
+	pip install -r requirements/local.txt
+
+
+# Coverage
+coverage-report: coverage-combine coverage-html
+	coverage report --show-missing
+
+coverage-combine:
+	coverage combine
+
+coverage-html:
+	coverage html
+
+coverage-clean:
+	rm -rf htmlcov
+	rm -f .coverage
+
+
+# ruff
+ruff-lint:
+	ruff check
+	ruff format --check
+
+ruff-format:
+	ruff check --fix-only
+	ruff format
+
+
+# pipdeptree
+pipdeptree-check:
+	pipdeptree --warn fail >/dev/null
+
+
+# Project testing
+django-test:
+	PYTHONWARNINGS=all coverage run $$(which django-admin) test --pythonpath $$(pwd) --settings tests.settings tests
+
+tox-test-lowest:
+	tox --recreate --override testenv.uv_resolution=lowest
 
 
 # Help

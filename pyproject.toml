@@ -1,13 +1,66 @@
-[tool.black]
-line-length = 99
-target-version = ['py35']
+[project]
+name = 'wagtail-link-block'
+version = '1.1.7'
+description = 'A Block for Wagtail that lets users choose a Page/Document/URL/email/etc. as a link'
+readme = 'README.md'
+maintainers = [{ name = 'The Developer Society', email = 'studio@dev.ngo' }]
+requires-python = '>= 3.9'
+dependencies = [
+    'Wagtail>=5.2',
+]
+classifiers = [
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: BSD License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Framework :: Django',
+    'Framework :: Django :: 4.2',
+    'Framework :: Django :: 5.0',
+    'Framework :: Django :: 5.1',
+    'Framework :: Wagtail',
+    'Framework :: Wagtail :: 5',
+    'Framework :: Wagtail :: 6',
+]
 
-[tool.isort]
-combine_as_imports = true
-sections = ['FUTURE','STDLIB','DJANGO','THIRDPARTY','FIRSTPARTY','LOCALFOLDER']
-known_django = 'django'
-include_trailing_comma = true
-float_to_top = true
-force_grid_wrap = 0
-line_length = 99
-multi_line_output = 3
+[project.urls]
+Homepage = "https://github.com/developersociety/wagtail-link-block"
+
+[build-system]
+requires = ['setuptools >= 61.0']
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools.packages.find]
+include = ['wagtail_link_block*']
+
+[tool.ruff]
+line-length = 99
+target-version = 'py39'
+
+[tool.ruff.lint]
+select = [
+    'F',   # pyflakes
+    'E',   # pycodestyle
+    'W',   # pycodestyle
+    'I',   # isort
+    'N',   # pep8-naming
+    'UP',  # pyupgrade
+    'S',   # flake8-bandit
+    'BLE', # flake8-blind-except
+    'C4',  # flake8-comprehensions
+    'EM',  # flake8-errmsg
+    'T20', # flake8-print
+    'RET', # flake8-return
+    'RUF', # ruff
+]
+ignore = [
+    'EM101', # flake8-errmsg: raw-string-in-exception
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
